@@ -6,25 +6,17 @@ class Game {
     //context du dessin du canvas
     ctx;
 
+    // Temporaire : position de base de la balle
+    ballX = 400;
+    ballY = 300;
+
     start() {
-        console.log('jeu');
+        console.log('jeu démarré');
         this.initHtmlUI();
-
-        //Temporairement: Dessin de la balle a partir d'un sprite
-        //1- On créer une baluise HTML <img> qui sera jamais ajoutée au DOM
-        const ballImg = new Image();
-        //2- on récuère le nom de l'image génére par webpack
-        ballImg.src = ballImgSrc;
-        //3- on dmd au context de dessiner cette image ds le canvas
-        ballImg.addEventListener('load', () => { 
-            this.ctx.drawImage(ballImg, 400, 300);
-        });
-
-
-
+        requestAnimationFrame(this.loop.bind(this));
     }
 
-    //méthode 'privée'
+    // Méthode 'privée'
     initHtmlUI() {
         const elH1 = document.createElement('h1');
         elH1.textContent = 'Salut';
@@ -44,7 +36,20 @@ class Game {
 
     // Boucle d'animation
     loop() {
-        console.log(this);
+        //1- On créer une baluise HTML <img> qui sera jamais ajoutée au DOM
+        const ballImg = new Image();
+        //2- on récuère le nom de l'image génére par webpack
+        ballImg.src = ballImgSrc;
+        //3- on dmd au context de dessiner cette image ds le canvas
+        ballImg.addEventListener('load', () => {
+            this.ctx.drawImage(ballImg, this.ballX, this.ballY);         
+        });
+        // Mise à jour de la position de la balle
+        this.ballX ++;
+        this.ballY --;
+
+        // Appel de la frame suivante 
+        requestAnimationFrame(this.loop.bind(this));
     }
 
     //fonction test inutile ds le jeu
