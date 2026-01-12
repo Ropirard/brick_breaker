@@ -16,17 +16,21 @@ export default class MovingObject extends GameObject
         this.orientation = orientation;
         this.speed = speed;
 
-        this.velocity = new Vector(
-
-        );
+        this.velocity = new Vector();
     }
 
-    reverseOrientationX() {
-        this.orientation = 180 - this.orientation
+    reverseOrientationX(alteration = 0) {
+        this.orientation += alteration;
+        this.orientation = 180 - this.orientation;
+
+        this.orientation = CustomMath.normalizedAngle(this.orientation);
     }
 
-    reverseOrientationY() {
+    reverseOrientationY(alteration = -1) {
+        this.orientation += alteration;
         this.orientation *= -1;
+
+        this.orientation = CustomMath.normalizedAngle(this.orientation);
     }
 
     update() {
