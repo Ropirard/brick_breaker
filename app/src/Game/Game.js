@@ -101,7 +101,7 @@ class Game {
         // Balle
         const ball = new Ball(this.images.ball, 20, 20, 45, 4);
         ball.setPosition(400, 300);
-
+        ball.isCircular = true;
         this.state.balls.push(ball);
 
         // Bordure de la mort
@@ -226,8 +226,8 @@ class Game {
 
             });
             
+            // Collision avec le paddle
             const paddleCollisionType = theBall.getCollisionType(this.state.paddle);
-
             switch (paddleCollisionType) {
                 case CollisionType.HORIZONTAL:
                     theBall.reverseOrientationX();
