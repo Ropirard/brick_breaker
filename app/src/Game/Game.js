@@ -1,5 +1,7 @@
 // Import de la feuille de style
 import '../assets/css/style.css';
+// Import des données de configurations
+import customConfig from '../config.json'
 // Import des assets de sprite
 import ballImgSrc from '../assets/img/ball.png';
 import paddleImgSrc from '../assets/img/paddle.png';
@@ -10,9 +12,34 @@ import GameObject from './GameObject';
 import CollisionType from './DataType/CollisionType';
 import Paddle from './Paddle';
 
-class Game {
+class Game 
+{
+    config = {
+        canvasSize: {
+            width: 800,
+            height: 600
+        },
+        ball: {
+            radius: 10,
+            orientation: 45,
+            speed: 3,
+            position: {
+                x: 400,
+                y: 300
+            }
+        },
+        paddleSize: {
+            width: 100,
+            height: 20
+        }
+    };
+
     // Contexte de dessin du canvas
     ctx;
+
+    // <span> de debug
+    debugSpan;
+    debugInfo = '';
 
     // Images
     images = {
@@ -41,6 +68,10 @@ class Game {
         
     };
 
+    constructor( customConfig =  {}) {
+        Object.assign(this.config, customConfig);
+    }
+
     start() {
         console.log('Jeu démarré ...');
         // Initialisation de l'interface HTML
@@ -63,7 +94,10 @@ class Game {
         elCanvas.width = 800;
         elCanvas.height = 600;
 
-        document.body.append(elH1, elCanvas);
+        // Débug box
+        this.debugSpan = document.createElement('span');
+
+        document.body.append(elH1, elCanvas, this.debugSpan);
 
         // Récupération du contexte de dessin
         this.ctx = elCanvas.getContext('2d');
@@ -99,39 +133,83 @@ class Game {
     // Mise en place des objets du jeu sur la scene
     initGameObjects() {
         // Balle
-        const ball = new Ball(this.images.ball, 20, 20, 45, 4);
-        ball.setPosition(400, 300);
+        const ballDiamater = this.config.ball.radius * 2;
+        const ball = new Ball(
+            this.images.ball,
+            ballDiamater, ballDiamater,
+            this.config.ball.orientation,
+            this.config.ball.speed
+        );
+        ball.setPosition(
+            this.config.ball.position.x,
+            this.config.ball.position.y
+        );
         ball.isCircular = true;
         this.state.balls.push(ball);
 
         // Bordure de la mort
-        const deathEdge = new GameObject(this.images.edge, 800, 20);
-        deathEdge.setPosition(0, 630);
+        const deathEdge = new GameObject(
+            this.images.edge, 
+            this.config.canvasSize.width, 
+            20
+        );
+        deathEdge.setPosition(
+            0, 
+            this.config.canvasSize.height + 30);
         this.state.deathEdge = deathEdge;
-        // TODO: On le dessine ou pas ?
+
         console.log(deathEdge)
 
         // Bordure à rebond
-        const edgeTop = new GameObject(this.images.edge, 800, 20);
+        // Haut
+        const edgeTop = new GameObject(
+            this.images.edge, 
+            this.config.canvasSize.width, 
+            20
+        );
         edgeTop.setPosition(0, 0);
-        const edgeRight = new GameObject(this.images.edge, 20, 610);
-        edgeRight.setPosition(780, 20);
+
+        // Droite
+        const edgeRight = new GameObject(
+            this.images.edge, 
+            20, 
+            this.config.canvasSize.height + 10
+        );
+        edgeRight.setPosition(
+            this.config.canvasSize.width - 20, 
+            20);
         edgeRight.tag = 'RightEdge';
+
+        // Gauche
         const edgeLeft = new GameObject(this.images.edge, 20, 610);
         edgeLeft.setPosition(0, 20);
         edgeLeft.tag = 'LeftEdge';
+
+        // Ajout dand la liste des bords
         this.state.bouncingEdges.push(edgeTop, edgeRight, edgeLeft);
 
         // Paddle
-        const paddle = new Paddle(this.images.paddle, 100, 20, 0, 0);
-        paddle.setPosition(350, 560);
+        const paddle = new Paddle(
+            this.images.paddle, 
+            this.config.paddleSize.width, 
+            this.config.paddleSize.height, 
+            0, 
+            0);
+        paddle.setPosition(
+            (this.config.canvasSize.width - this.config.paddleSize.width) / 2, 
+            this.config.canvasSize.height - this.config.paddleSize.height -20
+        );
         this.state.paddle = paddle;
     }
 
     // Boucle d'animation
     loop() {
         // On efface tous le canvas
-        this.ctx.clearRect(0, 0, 800, 600);
+        this.ctx.clearRect(
+            0, 
+            0, 
+            this.config.canvasSize.width, 
+            this.config.canvasSize.height);
 
         // Dessin des bordures à rebond
         this.state.bouncingEdges.forEach(theEdge => {
@@ -229,19 +307,37 @@ class Game {
             // Collision avec le paddle
             const paddleCollisionType = theBall.getCollisionType(this.state.paddle);
             switch (paddleCollisionType) {
-                case CollisionType.HORIZONTAL:
-                    theBall.reverseOrientationX();
+                case CollisionType.HORIZONTAL:          
+                    theBall.reverseOrientationX(alteration);
                     break;
 
                 case CollisionType.VERTICAL:
-                    theBall.reverseOrientationY();
+                    // Altération de l'angle en fonction du mouvement du paddle
+                    let alteration = 0;
+                    if (this.state.userInput.paddleRight)
+                        alteration = -10;
+                    else if (this.state.userInput.paddleLeft)
+                        alteration = 10;
+
+                    theBall.reverseOrientationY(alteration);
+
+                    // Correction pour un résultat de 0 et 180 pour éviter une trajection horizontale ou verticale
+                    if (theBall.orientation === 0)
+                        theBall.orientation = 10;
+                    else if (theBall.orientation === 180)
+                        theBall.orientation = 170;
                     break;
 
                 default:
                     break;
             }
+            // Affichage info debug balle
+            this.addDebugInfo('Ball orientation', theBall.orientation);
             
             theBall.draw();
+
+            this.debugSpan.innerHTML = this.debugInfo;
+            this.debugInfo = '';
         });
 
         // Mise a jour du state.balls avec saveBalls
@@ -267,6 +363,11 @@ class Game {
         this.ctx.fill();
     }
 
+    // debug info
+    addDebugInfo(label, value) {
+        this.debugInfo += label + ': ' + value + '<br>';
+    }
+
     // Gestionnaire d'évènement DOM
     handlerKeyboard(isActive, evt) {
         // Flèche droite
@@ -286,6 +387,6 @@ class Game {
     }
 };
 
-const theGame = new Game();
+const theGame = new Game(customConfig);
 
 export default theGame;

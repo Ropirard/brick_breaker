@@ -26,7 +26,7 @@ export default class MovingObject extends GameObject
         this.orientation = CustomMath.normalizedAngle(this.orientation);
     }
 
-    reverseOrientationY(alteration = -1) {
+    reverseOrientationY(alteration = 0) {
         this.orientation += alteration;
         this.orientation *= -1;
 

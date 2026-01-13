@@ -14,7 +14,7 @@ export default class CustomMath
         const fullCircle = isRadian ? 2 * Math.PI : 360;
         value %= fullCircle;
 
-        if (value >= 0) return;
+        if (value >= 0) return value;
 
         value += fullCircle;
         return value;
