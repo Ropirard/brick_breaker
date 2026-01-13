@@ -2,6 +2,7 @@
 import '../assets/css/style.css';
 // Import des données de configurations
 import customConfig from '../config.json'
+import levelsConfig from '../levels.json'
 // Import des assets de sprite
 import ballImgSrc from '../assets/img/ball.png';
 import paddleImgSrc from '../assets/img/paddle.png';
@@ -11,6 +12,7 @@ import Ball from './Ball';
 import GameObject from './GameObject';
 import CollisionType from './DataType/CollisionType';
 import Paddle from './Paddle';
+import Brick from './Brick';
 
 class Game 
 {
@@ -34,6 +36,9 @@ class Game
         }
     };
 
+    // Données des niveaux
+    levels;
+
     // Contexte de dessin du canvas
     ctx;
 
@@ -53,6 +58,8 @@ class Game
     state = {
         // Balles (plusieurs car possible multiball)
         balls: [],
+        // Brique
+        bricks: [],
         // Bordure de la mort
         deathEdge: null,
         // Bordures à rebond
@@ -68,8 +75,10 @@ class Game
         
     };
 
-    constructor( customConfig =  {}) {
+    constructor( customConfig =  {}, levelsConfig = []) {
         Object.assign(this.config, customConfig);
+
+        this.levels = levelsConfig;
     }
 
     start() {
@@ -200,6 +209,31 @@ class Game
             this.config.canvasSize.height - this.config.paddleSize.height -20
         );
         this.state.paddle = paddle;
+
+        // Chargement des briques
+        this.loadBricks(this.levels.data[0]);
+    }
+
+    // Création des briques
+    loadBricks(levelArray) {
+        // Lignes
+        for( let line = 0; line < levelArray.length; line ++) {
+            // Colonnes
+            for( let column = 0; column < levelArray[line].length; column ++) {
+                let brickType = levelArray[line][column];
+                // Si valeur trouvée = 0 -> espace vide -> On passe à la brique suivante
+                if( brickType == 0 ) continue;
+
+                // Si on a bien une brique, on la crée et la met dans le state
+                const brick = new Brick(this.images.brick, 50, 25, brickType);
+                brick.setPosition(
+                    50 * column,
+                    20 + (25 * line)
+                );
+
+                this.state.bricks.push(brick);
+            }
+        }
     }
 
     // Boucle d'animation
@@ -215,6 +249,11 @@ class Game
         this.state.bouncingEdges.forEach(theEdge => {
             theEdge.draw();
         });
+
+        // Dessin des briques
+        this.state.bricks.forEach( theBrick => {
+            theBrick.draw();
+        })
 
         // Cycle du paddle
         // On analyse quel commande de mouvement est demandée pour le paddle
@@ -387,6 +426,6 @@ class Game
     }
 };
 
-const theGame = new Game(customConfig);
+const theGame = new Game(customConfig, levelsConfig);
 
 export default theGame;
