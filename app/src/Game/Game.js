@@ -43,6 +43,9 @@ class Game {
     // Contexte de dessin du canvas
     ctx;
 
+    // Timestamp haute résolution de la boucle d'animation
+    currentLoopStamp;
+
     // <span> de débug
     debugSpan;
     debugInfo = '';
@@ -397,6 +400,9 @@ class Game {
         // Briques
         // On ne conserve dans le state que les briques dont strength
         this.state.bricks = this.state.bricks.filter(theBrick => theBrick.strength !== 0);
+
+        // Paddle
+        this.state.paddle.updateKeyFrame();
     }
 
     // Cycle de vie: 4- Rendu graphique des GameObjects
@@ -430,7 +436,10 @@ class Game {
     }
 
     // Boucle d'animation
-    loop() {
+    loop(stamp) {
+        // Enregistrement du stamp
+        this.currentLoopStamp = stamp;
+        
         // Cycle 1
         this.checkUserInput();
 
