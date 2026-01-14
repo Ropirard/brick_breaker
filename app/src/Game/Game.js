@@ -233,7 +233,7 @@ class Game {
                 // Si on bien une brique, on la crée et on la met dans le state
                 const brick = new Brick(this.images.brick, 50, 25, brickType);
                 brick.setPosition(
-                    20 + (50 * column),
+                    (50 * column),
                     20 + (25 * line)
                 );
 
@@ -298,7 +298,6 @@ class Game {
         // Collisions des balles avec tous les objets
         // On crée un tableau pour stocker les balles non-perdues
         const savedBalls = [];
-
         this.state.balls.forEach(theBall => {
 
             // Collision de la balle avec le bord de la mort
@@ -312,7 +311,6 @@ class Game {
             // Collisions de la balle avec les bords rebondissants
             this.state.bouncingEdges.forEach(theEdge => {
                 const collisionType = theBall.getCollisionType(theEdge);
-
                 switch (collisionType) {
                     case CollisionType.NONE:
                         return;
@@ -329,6 +327,31 @@ class Game {
                         break;
                 }
             });
+
+            // Collision de la balle avec le briques
+            this.state.bricks.forEach( theBrick => {
+                const collisionType = theBall.getCollisionType(theBrick);
+                switch (collisionType) {
+                    case CollisionType.NONE:
+                        return;
+
+                    case CollisionType.HORIZONTAL:
+                        theBall.reverseOrientationX();
+                        break;
+
+                    case CollisionType.VERTICAL:
+                        theBall.reverseOrientationY();
+                        break;
+
+                    default:
+                        break;
+                }
+
+                // Ici on a forcément une collision (car la 1ere clause du switch fait un return)
+                // TODO : Gérer le compteur de réistance de la brique
+                // Décrément du compteur de résistance de la brique
+                theBrick.strength--;
+            })
 
             // Collision avec le paddle
             const paddleCollisionType = theBall.getCollisionType(this.state.paddle);
@@ -370,6 +393,10 @@ class Game {
         this.state.balls.forEach(theBall => {
             theBall.update();
         });
+
+        // Briques
+        // On ne conserve dans le state que les briques dont strength
+        this.state.bricks = this.state.bricks.filter(theBrick => theBrick.strength !== 0);
     }
 
     // Cycle de vie: 4- Rendu graphique des GameObjects
